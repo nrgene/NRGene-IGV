@@ -1,0 +1,166 @@
+
+<!--
+~ Copyright (c) 2007-2011 by The Broad Institute of MIT and Harvard.  All Rights Reserved.
+~
+~ This software is licensed under the terms of the GNU Lesser General Public License (LGPL),
+~ Version 2.1 which is available at http://www.opensource.org/licenses/lgpl-2.1.php.
+~
+~ THE SOFTWARE IS PROVIDED "AS IS." THE BROAD AND MIT MAKE NO REPRESENTATIONS OR
+~ WARRANTES OF ANY KIND CONCERNING THE SOFTWARE, EXPRESS OR IMPLIED, INCLUDING,
+  ~ WITHOUT LIMITATION, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+~ PURPOSE, NONINFRINGEMENT, OR THE ABSENCE OF LATENT OR OTHER DEFECTS, WHETHER
+~ OR NOT DISCOVERABLE.  IN NO EVENT SHALL THE BROAD OR MIT, OR THEIR RESPECTIVE
+~ TRUSTEES, DIRECTORS, OFFICERS, EMPLOYEES, AND AFFILIATES BE LIABLE FOR ANY DAMAGES
+~ OF ANY KIND, INCLUDING, WITHOUT LIMITATION, INCIDENTAL OR CONSEQUENTIAL DAMAGES,
+~ ECONOMIC DAMAGES OR INJURY TO PROPERTY AND LOST PROFITS, REGARDLESS OF WHETHER
+~ THE BROAD OR MIT SHALL BE ADVISED, SHALL HAVE OTHER REASON TO KNOW, OR IN FACT
+~ SHALL KNOW OF THE POSSIBILITY OF THE FOREGOING.
+-->
+
+<project name="IGV" default="all" basedir=".">
+	<property environment="env"/>
+
+    <!-- build specific properties.  Generally set through Jenkins, command line, or properties file-->
+    <property name="version_default" value="5.4.0-SNAPSHOT"/>
+    <condition property="version" value="${env.IGV_VERSION}" else="${version_default}">
+        <isset property="env.IGV_VERSION" />
+    </condition>
+
+    <property name="main-class" value="org.broad.igv.ui.IGVMainFrame"/>
+
+    <!-- Source and lib directories -->
+    <property name="src.dir" value="${basedir}/src/"/>
+    <property name="lib.dir" value="${basedir}/lib/"/>
+
+    <!-- Temp directory.  Sources are compiled here prior to archiving -->
+    <property name="tmp.dir" value="${basedir}/tmp/"/>
+    <property name="resource.dir" value="${tmp.dir}resources/"/>
+
+    <!-- Distribution directory.  Binary distribution is placed here -->
+    <property name="dist.dir" value="${basedir}/"/>
+    <property name="standalone.dir" value="${basedir}/standalone/"/>
+    <property name="data-server-url"    value="http://www.broad.mit.edu/igv/resources/dataServerRegistry" />
+    <property name="batik-codec-finame" value="batik-codec-1.7.jar"/>
+
+    <!-- Create class path for manifest -->
+    <path id="@jars">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+    <!-- set build_timestamp in case env.BUILD_NUMBER was not passed -->
+    <target name="gettime">
+        <exec executable="date" outputproperty="build_timestamp">
+            <arg value="+%s"/>
+        </exec>
+        <condition property="build-number" value="${env.BUILD_NUMBER}" else="${build_timestamp}">
+            <isset property="env.BUILD_NUMBER" />
+        </condition>
+        <property name="jar.name" value="igv-nrgene-${version}.jar"/>
+        <property name="jar.path" value="${dist.dir}${jar.name}"/>
+    </target>
+
+
+    <!-- Clean all generated artifacts -->
+    <target name="clean">
+        <delete dir="${tmp.dir}"/>
+        <delete dir="${dest.dir}"/>
+    </target>
+
+
+    <!-- Unzip jars to the tmp directory -->
+    <target name="prepare" >
+        <unzip dest="${tmp.dir}">
+            <patternset>
+                <include name="**/*"/>
+                <exclude name="META-INF/**"/>
+            </patternset>
+            <fileset dir="${lib.dir}">
+                <include name="**/*.jar"/>
+                <exclude name="**/${batik-codec-finame}"/>
+            </fileset>
+        </unzip>
+    </target>
+
+    <target name="init" depends="clean,gettime">
+
+        <echo message="Resource ${resource.dir}"/>
+        <echo message="Version ${version}"/>
+        <echo message="Build number ${build-number}"/>
+
+    	<mkdir dir="${tmp.dir}"/>
+
+        <!-- Copy resource files to the tmp directory -->
+        <copy todir="${tmp.dir}" overwrite="true">
+            <fileset dir="${src.dir}">
+                <exclude name="**/*.form"/>
+                <exclude name="**/*.java"/>
+                <exclude name="**/*.svn"/>
+                <exclude name="**/manifest.mf"/>
+            </fileset>
+        </copy>
+
+        <antcall target="prepare"/>
+
+        <tstamp>
+            <format property="timestamp" pattern="MM/dd/yyyy hh:mm aa"/>
+        </tstamp>
+<!--
+        <echo message="Resource ${resource.dir}"/>
+        <echo message="Version ${version}"/>
+        <echo message="Build number ${build-number}"/>
+-->
+        <replace file="${resource.dir}about.properties" token="@VERSION" value="${version}"/>
+        <replace file="${resource.dir}about.properties" token="@BUILD" value="${build-number}"/>
+        <replace file="${resource.dir}about.properties" token="@TIMESTAMP" value="${timestamp}"/>
+        <replace file="${resource.dir}about.properties" token="@DEFAULT_MASTER_RESOURCE_URL" value="${data-server-url}"/>
+
+    </target>
+
+    <target name="compile" depends="init" description="Compile main source files to temp directory">
+        <javac includeantruntime="false" srcdir="${src.dir}"  debug="on" destdir="${tmp.dir}">
+            <classpath refid="@jars"/>
+        </javac>
+    </target>
+
+    <macrodef name="build">
+        <attribute name="includedFileset"/>
+
+        <sequential>
+            <jar destfile="${jar.path}" basedir="${tmp.dir}" compress="true" duplicate="preserve">
+                <fileset refid="@{includedFileset}"/>
+                <manifest>
+                    <attribute name="Class-Path" value="${class-path}"/>
+                    <attribute name="Built-By" value="${user.name}"/>
+                    <attribute name="Main-Class" value="${main-class}"/>
+                    <attribute name="Permissions" value="all-permissions"/>
+                    <attribute name="Implementation-Title" value="IGV Nrgene"/>
+                    <attribute name="Implementation-Version" value="${version}"/>
+                    <attribute name="Implementation-Vendor-Id" value="com.nrgene"/>
+                    <attribute name="Implementation-Vendor" value="Nrgene"/>
+                </manifest>
+            </jar>
+            <copy file="${lib.dir}${batik-codec-finame}" tofile="${dist.dir}${batik-codec-finame}" overwrite="true"/>
+        </sequential>
+    </macrodef>
+
+    <target name="build" depends="compile" 
+            description="Build the IGV JAR using BCEL to take only required classes">
+
+        <classfileset dir="${tmp.dir}" id="files">
+            <root classname="${main-class}"/>
+        </classfileset>
+
+        <property name="class-path" value="${batik-codec-finame}"/>
+
+        <build includedFileset="files"/>
+    </target>
+
+	<target name="zip" depends="build">
+	  <zip destfile="${standalone.dir}/standalone-igv.zip">
+	    <zipfileset dir="." includes="igv.sh,igv_debug.sh,igv.bat,${jar.name},${batik-codec-finame}" filemode="755" prefix="standalone-igv/"/>
+	  </zip>
+	</target>
+	
+	<target name="all" depends="build,clean"/>
+</project>

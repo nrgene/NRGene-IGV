@@ -1,0 +1,289 @@
+/*
+ * Copyright (c) 2007-2011 by The Broad Institute of MIT and Harvard.  All Rights Reserved.
+ *
+ * This software is licensed under the terms of the GNU Lesser General Public License (LGPL),
+ * Version 2.1 which is available at http://www.opensource.org/licenses/lgpl-2.1.php.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS." THE BROAD AND MIT MAKE NO REPRESENTATIONS OR
+ * WARRANTES OF ANY KIND CONCERNING THE SOFTWARE, EXPRESS OR IMPLIED, INCLUDING,
+ * WITHOUT LIMITATION, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE, NONINFRINGEMENT, OR THE ABSENCE OF LATENT OR OTHER DEFECTS, WHETHER
+ * OR NOT DISCOVERABLE.  IN NO EVENT SHALL THE BROAD OR MIT, OR THEIR RESPECTIVE
+ * TRUSTEES, DIRECTORS, OFFICERS, EMPLOYEES, AND AFFILIATES BE LIABLE FOR ANY DAMAGES
+ * OF ANY KIND, INCLUDING, WITHOUT LIMITATION, INCIDENTAL OR CONSEQUENTIAL DAMAGES,
+ * ECONOMIC DAMAGES OR INJURY TO PROPERTY AND LOST PROFITS, REGARDLESS OF WHETHER
+ * THE BROAD OR MIT SHALL BE ADVISED, SHALL HAVE OTHER REASON TO KNOW, OR IN FACT
+ * SHALL KNOW OF THE POSSIBILITY OF THE FOREGOING.
+ */
+
+package org.broad.igv.track;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.broad.igv.data.DataSource;
+import org.broad.igv.feature.LocusScore;
+import org.broad.igv.feature.genome.Genome;
+import org.broad.igv.feature.tribble.CachingFeatureReader;
+import org.broad.igv.feature.tribble.CodecFactory;
+import org.broad.igv.feature.tribble.VCFWrapperCodec;
+import org.broad.igv.nrgene.api.ApiRequest;
+import org.broad.igv.tdf.TDFDataSource;
+import org.broad.igv.tdf.TDFReader;
+import org.broad.igv.ui.IGV;
+import org.broad.igv.util.ParsingUtils;
+import org.broad.igv.util.RuntimeUtils;
+import org.broad.igv.util.stream.IGVUrlHelper;
+import org.broad.tribble.Feature;
+import org.broad.tribble.FeatureCodec;
+import org.broad.tribble.iterators.CloseableTribbleIterator;
+import org.broad.tribble.source.BasicFeatureSource;
+import org.broad.tribble.util.SeekableStreamFactory;
+
+/**
+ * @author jrobinso
+ * @date Jun 27, 2010
+ */
+public class TribbleFeatureSource implements org.broad.igv.track.FeatureSource {
+
+	static private Map<String, TribbleFeatureSource>		instances = new LinkedHashMap<String, TribbleFeatureSource>();
+	static private boolean useInstances = true;
+	
+    CachingFeatureReader reader;
+    DataSource coverageSource;
+    boolean isVCF;
+    Genome genome;
+    String key;
+    Set<Track> usedByTracks = new LinkedHashSet<Track>();
+
+    /**
+     * Map of IGV chromosome name -> source name
+     */
+    Map<String, String> chrNameMap = new HashMap();
+    private int featureWindowSize;
+    Object header;
+    Class featureClass;
+
+    static {
+        // Register a helper class with tribble
+        SeekableStreamFactory.registerHelperClass(IGVUrlHelper.class);
+    }
+
+
+    public TribbleFeatureSource(String path, Genome genome) throws IOException {
+
+        FeatureCodec codec = CodecFactory.getCodec(path);
+        this.genome = genome;
+        isVCF = codec.getClass() == VCFWrapperCodec.class;
+        featureClass = codec.getFeatureType();
+        BasicFeatureSource basicReader = BasicFeatureSource.getFeatureSource(path, codec, true);
+        basicReader.setGenome(genome);
+        header = basicReader.getHeader();
+        initFeatureWindowSize(basicReader);
+        reader = new CachingFeatureReader(basicReader, 5, getFeatureWindowSize());
+
+
+        init();
+
+        String		coveragePath = path + ".tdf";
+        if ( ApiRequest.isNiu() )
+        	coveragePath = ApiRequest.buildIndexPath(path, ".tdf");
+        
+        initCoverageSource(coveragePath);
+
+    }
+
+    private synchronized void initCoverageSource(String covPath) {
+        if (ParsingUtils.pathExists(covPath)) {
+            TDFReader reader = TDFReader.getReader(covPath);
+            coverageSource = new TDFDataSource(reader, 0, "", genome);
+        }
+    }
+
+    private synchronized void init() {
+        Genome genome = IGV.getInstance().getGenomeManager().getCurrentGenome();
+        if (genome != null) {
+            Collection<String> seqNames = reader.getSequenceNames();
+            if (seqNames != null)
+                for (String seqName : seqNames) {
+                    String igvChr = genome.getChromosomeAlias(seqName);
+                    if (igvChr != null && !igvChr.equals(seqName)) {
+                        chrNameMap.put(igvChr, seqName);
+                    }
+                }
+        }
+    }
+
+    public synchronized Class getFeatureClass() {
+        return featureClass;
+    }
+
+
+    /**
+     * Return features overlapping the query interval
+     *
+     * @param chr
+     * @param start
+     * @param end
+     * @return
+     * @throws IOException
+     */
+    public synchronized CloseableTribbleIterator<Feature> getFeatures(String chr, int start, int end) throws IOException {
+
+        String seqName = chrNameMap.get(chr);
+        if (seqName == null) seqName = chr;
+        return reader.query(seqName, start, end);
+    }
+
+    /**
+     * Return coverage values overlapping the query interval.   At this time Tribble sources do not provide
+     * coverage values
+     *
+     * @param chr
+     * @param start
+     * @param end
+     * @param zoom
+     * @return
+     */
+    public synchronized List<LocusScore> getCoverageScores(String chr, int start, int end, int zoom) {
+        return coverageSource == null ? null :
+                coverageSource.getSummaryScoresForRange(chr, start, end, zoom);
+    }
+
+    public synchronized int getFeatureWindowSize() {
+        return featureWindowSize;
+    }
+
+    public synchronized void setFeatureWindowSize(int size) {
+    	// set only if meaningful
+    	if ( ApiRequest.isNiu() && (size <= 1) )
+    		return;
+    	if ( usedByTracks.size() <= 1 )
+    		featureWindowSize = size;
+    	else
+    		featureWindowSize = Math.max(featureWindowSize, size);
+        reader.setBinSize(featureWindowSize);
+    }
+
+    public synchronized Object getHeader() {
+        return header;
+    }
+
+
+    /**
+     * Estimate an appropriate feature window size.
+     *
+     * @param reader
+     */
+    private synchronized void initFeatureWindowSize(org.broad.tribble.FeatureSource reader) {
+
+        CloseableTribbleIterator<org.broad.tribble.Feature> iter = null;
+
+        try {
+            double mem = RuntimeUtils.getAvailableMemory();
+            iter = reader.iterator();
+            if (iter.hasNext()) {
+
+                int nSamples = isVCF ? 100 : 1000;
+                org.broad.tribble.Feature firstFeature = iter.next();
+                org.broad.tribble.Feature lastFeature = firstFeature;
+                String chr = firstFeature.getChr();
+                int n = 1;
+                long len = 0;
+                while (iter.hasNext() && n < nSamples) {
+                    org.broad.tribble.Feature f = iter.next();
+                    if (f != null) {
+                        n++;
+                        if (f.getChr().equals(chr)) {
+                            lastFeature = f;
+                        } else {
+                            len += lastFeature.getEnd() - firstFeature.getStart() + 1;
+                            firstFeature = f;
+                            lastFeature = f;
+                            chr = f.getChr();
+                        }
+
+                    }
+                }
+                double dMem = mem - RuntimeUtils.getAvailableMemory();
+                double bytesPerFeature = Math.max(100, dMem / n);
+
+                len += lastFeature.getEnd() - firstFeature.getStart() + 1;
+                double featuresPerBase = ((double) n) / len;
+
+                double targetBinMemory = 20000000;  // 20  mega bytes
+                int maxBinSize = isVCF ? 1000000 : Integer.MAX_VALUE;
+                int bs = Math.min(maxBinSize, (int) (targetBinMemory / (bytesPerFeature * featuresPerBase)));
+                featureWindowSize = Math.max(1000000, bs);
+            } else {
+                featureWindowSize = Integer.MAX_VALUE;
+            }
+        } catch (IOException e) {
+            featureWindowSize = 1000000;
+        }
+    }
+    
+    public synchronized void reload()
+    {
+    	reader.reload();
+    }
+
+	public static synchronized TribbleFeatureSource getInstance(String path, Genome genome) throws IOException
+	{
+		boolean					isVCF = path.endsWith("vcf") || path.endsWith("vcf.gz");
+
+		if ( !useInstances || !isVCF )
+			return new TribbleFeatureSource(path, genome);
+		else
+		{
+			String					key = path + "@" + genome.getId();
+			File					file = new File(path);
+			if ( file.exists() )
+				key = key + "@" + file.lastModified();
+			
+			TribbleFeatureSource	instance = instances.get(key);
+			
+			if ( instance == null )
+			{
+				instances.put(key, instance = new TribbleFeatureSource(path, genome));
+				instance.key = key;
+			}
+			
+			return instance;
+		}
+	}
+
+	public synchronized static void clearInstances() 
+	{
+		instances.clear();
+	}
+
+	public synchronized void registerTrack(Track track) 
+	{
+		usedByTracks.add(track);
+	}
+
+	public synchronized void deregisterTrack(Track track)
+	{
+		usedByTracks.remove(track);
+		if ( usedByTracks.size() == 0 )
+		{
+			instances.remove(key);
+			
+			try {
+				reader.close();
+			} catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+	}
+	
+}
