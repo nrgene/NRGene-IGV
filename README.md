@@ -9,7 +9,7 @@ Prerequisites:
 Java J2SE 6.0 or greater
 Ant 1.7.0 or greater (http://ant.apache.org/)
 
-Important: to have the jar signed, download and put bcel-6.0.jar in: ```/usr/share/ant/lib/``` or somewhere where in ant's classpath
+Important: before building the jar from sources one needs to ```cp ./bin/bcel-6.0.jar /usr/share/ant/lib/``` otherwise, you might get a ClassNotFound exception when trying to build the jar
 
 1.  Download and unzip the source distribution file.
 
