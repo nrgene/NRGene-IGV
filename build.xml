@@ -21,7 +21,7 @@
 	<property environment="env"/>
 
     <!-- build specific properties.  Generally set through Jenkins, command line, or properties file-->
-    <property name="version_default" value="5.4.0-SNAPSHOT"/>
+    <property name="version_default" value="5.4.0"/>
     <condition property="version" value="${env.IGV_VERSION}" else="${version_default}">
         <isset property="env.IGV_VERSION" />
     </condition>
