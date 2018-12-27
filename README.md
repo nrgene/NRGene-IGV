@@ -34,3 +34,6 @@ available to IGV by editing the first line of the startup script.
 Specifically change the value of the "-Xmx" parameter.  For example,
 to start IGV with 1 gigabyte of memory  change the value to -Xmx10000m
 
+DOWNLOAD
+---------
+It is also possible to download the "igv.jar" file from this link -  https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar
