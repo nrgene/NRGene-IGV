@@ -36,4 +36,9 @@ to start IGV with 1 gigabyte of memory  change the value to -Xmx10000m
 
 DOWNLOAD
 ---------
-It is also possible to download the "igv.jar" file from this link -  https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar
+It is also possible to download the standalone jar from this [link](https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar)
+
+Then just call: ```java -jar igv-nrgene-5.4.0.jar```
+
+
+
