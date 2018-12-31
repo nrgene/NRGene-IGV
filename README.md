@@ -1,46 +1,35 @@
 # IGV
 NRGene's fork of IGV, based on a previous Version of the Broad's [IGV](https://github.com/igvteam/igv)
 
+DOWNLOADING
+-----------
+You can download the standalone IGV jar from [here](https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar)
+
+Then to run, just call: ```java -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx3g -jar igv-nrgene-5.4.0.jar```
+
 BUILDING
 --------
+Prerequisites: Java JDK6 or greater and [Ant](http://ant.apache.org/) 1.7.0 or greater
 
-Prerequisites:
+1. Download and unzip the source distribution file.
 
-Java J2SE 6.0 or greater
-Ant 1.7.0 or greater (http://ant.apache.org/)
+2. Copy bin/bcel-6.0.jar to /usr/share/ant/lib/ - otherwise, you might get a ClassNotFound exception from ant when trying to build the jar
 
-Important: before building the jar from sources one needs to ```cp ./bin/bcel-6.0.jar /usr/share/ant/lib/``` otherwise, you might get a ClassNotFound exception when trying to build the jar
-
-1.  Download and unzip the source distribution file.
-
-2.  Run the provided ant script by running "ant" from the root directory
-    of the distribution.
-
-The above build tool will create ```igv.jar``` in the root directory of the distribution.
+3. Run the build tool: ant. It will create ```igv-nrgene-5.4.0.jar``` in the root directory of the project.
 
 
 RUNNING
 -------
-
-After building igv.jar IGV can be launched by executing one of the following
+After building the jar executable, IGV can be launched by executing one of the following
 command line scripts:
 
 igv.sh        (for Linux and OSX)
 
 igv.bat       (for Windows)
 
-The shell script is configured to start IGV with maximum 3000MB of
+The shell scripts are configured to start IGV with maximum 3gb of
 memory.  This is a reasonable default for most machines.  If you are
 working with very large datasets you can increase the amount of memory
 available to IGV by editing the first line of the startup script.
 Specifically change the value of the "-Xmx" parameter.  For example,
-to start IGV with 1 gigabyte of memory  change the value to -Xmx10000m
-
-DOWNLOAD
----------
-It is also possible to download the standalone jar from this [link](https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar)
-
-Then just call: ```java -jar igv-nrgene-5.4.0.jar```
-
-
-
+to start IGV with 6 gigabytes of memory change the value to -Xmx6g
