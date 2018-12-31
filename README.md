@@ -11,9 +11,9 @@ BUILDING
 --------
 Prerequisites: Java JDK6 or greater and [Ant](http://ant.apache.org/) 1.7.0 or greater
 
-1. Download and unzip the source distribution file.
+1. Clone or download this repository.
 
-2. Copy bin/bcel-6.0.jar to /usr/share/ant/lib/ - otherwise, you might get a ClassNotFound exception from ant when trying to build the jar
+2. Copy bin/bcel-6.0.jar from this project to /usr/share/ant/lib/ (in Linux) - otherwise, you might get a ClassNotFound exception from ant build tool when trying to build the jar.
 
 3. Run the build tool: ant. It will create ```igv-nrgene-5.4.0.jar``` in the root directory of the project.
 
