@@ -26,6 +26,7 @@ After building igv.jar IGV can be launched by executing one of the following
 command line scripts:
 
 igv.sh        (for Linux and OSX)
+
 igv.bat       (for Windows)
 
 The shell script is configured to start IGV with maximum 3000MB of
