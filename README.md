@@ -16,7 +16,7 @@ Important: before building the jar from sources one needs to ```cp ./bin/bcel-6.
 2.  Run the provided ant script by running "ant" from the root directory
     of the distribution.
 
-The above script will build "igv.jar" in the root directory of the distribution.
+The above build tool will create ```igv.jar``` in the root directory of the distribution.
 
 
 RUNNING
@@ -25,7 +25,8 @@ RUNNING
 After building igv.jar IGV can be launched by executing one of the following
 command line scripts:
 
-igv.sh        (for LINUX and MAC OsX)
+igv.sh        (for Linux and OSX)
+igv.bat       (for Windows)
 
 The shell script is configured to start IGV with maximum 3000MB of
 memory.  This is a reasonable default for most machines.  If you are
