@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><jnlp spec="1.0+" 
+    codebase="https://s3.amazonaws.com/nrgene-igv-download/">
+    <security>
+       <all-permissions/>
+    </security>
+    <information>
+        <title>IGV/Nrgene</title>
+        <vendor>Nrgene</vendor>
+    </information>
+    <resources>
+        <!-- Application Resources -->
+        <j2se version="1.8+"
+              href="http://java.sun.com/products/autodl/j2se"
+              java-vm-args="-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:MaxGCPauseMillis=2000 -Xmx1g"/>
+        <jar href="igv-nrgene-5.4.0.jar" main="true" />
+	<jar href="batik-codec-1.7.jar" main="false"/>
+            </resources>
+    <application-desc
+         name="IVG/Nrgene"
+         main-class="org.broad.igv.ui.IGVMainFrame"
+         width="800"
+         height="700">
+     </application-desc>
+     <update check="always"/>
+</jnlp>				
