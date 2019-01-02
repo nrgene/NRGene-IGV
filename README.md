@@ -7,7 +7,7 @@ You can download the standalone IGV jar from [here](https://s3.amazonaws.com/nrg
 
 Then to run, just call: ```java -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx3g -jar igv-nrgene-5.4.0.jar```
 
-Alternatively, you can execute the standalone jar via your web browser, using Java web start and the link [here](https://github.com/nrgene/NRGene-IGV/blob/master/bin/igv.jnlp)
+Alternatively, you can execute the standalone jar via your web browser, using Java web start and the link [here](https://s3.amazonaws.com/nrgene-igv-download/igv.jnlp)
 
 BUILDING
 --------
