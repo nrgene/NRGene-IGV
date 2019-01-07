@@ -91,8 +91,8 @@ final class CommonInfo
         if(filters == null)
             throw new IllegalArgumentException((new StringBuilder()).append("BUG: Attempting to add null filters at").append(this).toString());
         String f;
-        for(Iterator i$ = filters.iterator(); i$.hasNext(); addFilter(f))
-            f = (String)i$.next();
+        for(Iterator j = filters.iterator(); j.hasNext(); addFilter(f))
+            f = (String)j.next();
 
     }
 
@@ -175,8 +175,8 @@ final class CommonInfo
             } else
             {
                 java.util.Map.Entry elt;
-                for(Iterator i$ = map.entrySet().iterator(); i$.hasNext(); putAttribute((String)elt.getKey(), elt.getValue(), false))
-                    elt = (java.util.Map.Entry)i$.next();
+                for(Iterator j = map.entrySet().iterator(); j.hasNext(); putAttribute((String)elt.getKey(), elt.getValue(), false))
+                    elt = (java.util.Map.Entry)j.next();
 
             }
     }
