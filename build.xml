@@ -74,6 +74,7 @@
             <patternset>
                 <include name="**/*"/>
                 <exclude name="META-INF/**"/>
+	        <exclude name="LICENSE/**"/>
             </patternset>
             <fileset dir="${lib.dir}">
                 <include name="**/*.jar"/>
