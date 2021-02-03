@@ -3,9 +3,9 @@ NRGene's fork of IGV, based on a previous Version of the Broad's [IGV](https://g
 
 DOWNLOADING
 -----------
-You can download the standalone IGV jar from [here](https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene-5.4.0.jar)
+You can download the standalone IGV jar from [here](https://s3.amazonaws.com/nrgene-igv-download/igv-nrgene.jar)
 
-Then to run, just call: ```java -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx3g -jar igv-nrgene-5.4.0.jar```
+Then to run, just call: ```java -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -Xmx3g -jar igv-nrgene.jar```
 
 
 BUILDING
