@@ -1,4 +1,6 @@
 # IGV
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnrgene%2FNRGene-IGV.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnrgene%2FNRGene-IGV?ref=badge_shield)
+
 NRGene's fork of IGV, based on a previous Version of the Broad's [IGV](https://github.com/igvteam/igv)
 
 DOWNLOADING
@@ -34,3 +36,7 @@ working with very large datasets you can increase the amount of memory
 available to IGV by editing the first line of the startup script.
 Specifically change the value of the "-Xmx" parameter.  For example,
 to start IGV with 6 gigabytes of memory change the value to -Xmx6g
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnrgene%2FNRGene-IGV.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnrgene%2FNRGene-IGV?ref=badge_large)
